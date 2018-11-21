@@ -1,8 +1,9 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,12 +36,13 @@ namespace Downloader.Robot
 
             Log("Etapa 4 - Tentando comunicação com a página");
             var address = @"http://www.facebook.com/";
-            HttpClient client = new HttpClient();
-            HttpResponseMessage response = client.GetAsync(address).Result;
-
-            if (response.IsSuccessStatusCode)
+            var client = new HtmlWeb();
+            if (client.StatusCode == HttpStatusCode.OK)
             {
-                HttpContent content = response.Content;
+                var htmlDoc = client.Load(address);
+
+                var node = htmlDoc.DocumentNode.SelectSingleNode("//head/title");
+                Log(node.InnerHtml);
             }
 
             Thread.Sleep(20000);
