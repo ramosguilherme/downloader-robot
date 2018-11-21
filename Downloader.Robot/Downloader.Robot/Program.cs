@@ -12,6 +12,9 @@ namespace Downloader.Robot
 {
     class Program
     {
+        private static string User { get; set; }
+        private static string Password { get; set; }
+
         static void Main(string[] args)
         {
             Log("Etapa 1 - Verificando se arquivo existe");
@@ -26,8 +29,8 @@ namespace Downloader.Robot
             Log("Etapa 3 - Validando conteúdo do arquivo");
             if (credenciais.Length == 2)
             {
-                var user = credenciais[0];
-                var password = credenciais[1];
+                User = credenciais[0];
+                Password = credenciais[1];
             }
             else
             {
@@ -40,9 +43,16 @@ namespace Downloader.Robot
             if (client.StatusCode == HttpStatusCode.OK)
             {
                 var htmlDoc = client.Load(address);
+                var nodeUser = htmlDoc.DocumentNode.SelectSingleNode(@"//input[@id='email']");
+                var nodePassword = htmlDoc.DocumentNode.SelectSingleNode(@"//input[@id='pass']");
 
-                var node = htmlDoc.DocumentNode.SelectSingleNode("//head/title");
-                Log(node.InnerHtml);
+                nodeUser.Attributes.Append("value");
+                nodeUser.SetAttributeValue("value", User);
+                Log(nodeUser.OuterHtml);
+
+                nodePassword.Attributes.Append("value");
+                nodePassword.SetAttributeValue("value", Password);
+                Log(nodePassword.OuterHtml);
             }
 
             Thread.Sleep(20000);
