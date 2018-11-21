@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +33,17 @@ namespace Downloader.Robot
                 throw new Exception("Arquivo com conteúdo não válido");
             }
 
-            Thread.Sleep(2000);
+            Log("Etapa 4 - Tentando comunicação com a página");
+            var address = @"http://www.facebook.com/";
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = client.GetAsync(address).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                HttpContent content = response.Content;
+            }
+
+            Thread.Sleep(20000);
         }
 
         private static void Log(string message)
