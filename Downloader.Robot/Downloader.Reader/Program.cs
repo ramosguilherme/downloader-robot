@@ -1,69 +1,127 @@
-﻿using ServiceStack;
-using System;
-using System.Collections.Generic;
+﻿using System;
+
 using System.IO;
-using System.Linq;
-using System.Net;
+
+using System.Data;
+
+using System.Data.OleDb;
+
+using System.Collections.Generic;
+
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Downloader.Reader
 {
     class Program
     {
         static void Main(string[] args)
+
         {
-            //var caminho = @"Data\\NBA_player_of_the_week.csv";
-            var caminho = @"Data\\Lista de estoque com novas encomendas em destaque1.xls";
-            //var arquivo = new FileStream(caminho, FileMode.Open, FileAccess.Read);
-            //string text;
-            //using (var streamReader = new StreamReader(arquivo, Encoding.UTF8))
-            //{
-            //    text = streamReader.ReadToEnd();
-            //}
+            // https://social.msdn.microsoft.com/Forums/pt-BR/04be0aee-70d3-4c27-83b2-8417b98f3aa5/converter-xls-em-csv-no-c?forum=504
+            string sourceFile, worksheetName, targetFile;
 
-            string[] filePaths = Directory.GetFiles(@"C:\\Users\\Guilherme\\Desktop");
+            sourceFile = @"Data\Lista de estoque com novas encomendas em destaque1.xls"; worksheetName = "sheet1"; targetFile = @"Data\saida.csv";
+
+            convertExcelToCSV(sourceFile, worksheetName, targetFile);
+
+        }
 
 
-            HttpWebRequest request = WebRequest.Create("http://google.com") as HttpWebRequest;
+        static void convertExcelToCSV(string sourceFile, string worksheetName, string targetFile)
 
-            //request.Accept = "application/xrds+xml";  
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+        {
 
-            WebHeaderCollection header = response.Headers;
+            string strConn = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=|DataDirectory|\" + sourceFile + "; Extended Properties=\" Excel.0;HDR=Yes;IMEX=1\"";
 
-            var encoding = ASCIIEncoding.ASCII;
-            using (var reader = new System.IO.StreamReader(response.GetResponseStream(), encoding))
+            OleDbConnection conn = null;
+
+            StreamWriter wrtr = null;
+
+            OleDbCommand cmd = null;
+
+            OleDbDataAdapter da = null;
+
+            try
+
             {
-                string responseText = reader.ReadToEnd();
+
+                conn = new OleDbConnection(strConn);
+
+                conn.Open();
+
+
+
+                cmd = new OleDbCommand("SELECT * FROM [" + worksheetName + "$]", conn);
+
+                cmd.CommandType = CommandType.Text;
+
+                wrtr = new StreamWriter(targetFile);
+
+
+
+                da = new OleDbDataAdapter(cmd);
+
+                DataTable dt = new DataTable();
+
+                da.Fill(dt);
+
+
+
+                for (int x = 0; x < dt.Rows.Count; x++)
+
+                {
+
+                    string rowString = "";
+
+                    for (int y = 0; y < dt.Columns.Count; y++)
+
+                    {
+
+                        rowString += "\"" + dt.Rows[x][y].ToString() + "\",";
+
+                    }
+
+                    wrtr.WriteLine(rowString);
+
+                }
+
+                Console.WriteLine();
+
+                Console.WriteLine("Done! Your " + sourceFile + " has been converted into " + targetFile + ".");
+
+                Console.WriteLine();
+
             }
 
-            //string sourceFile = @"C:\Users\Public\public\test.txt";
-            //string destinationFile = @"C:\Users\Public\private\test.txt";
+            catch (Exception exc)
 
-            //// To move a file or folder to a new location:
-            //System.IO.File.Move(sourceFile, destinationFile);
+            {
 
-            //// To move an entire directory. To programmatically modify or combine
-            //// path strings, use the System.IO.Path class.
-            //System.IO.Directory.Move(@"C:\Users\Public\public\test\", @"C:\Users\Public\private");
+                Console.WriteLine(exc.ToString());
 
+                Console.ReadLine();
 
-            //public object Any()
-            //{
-            //string fileFullPath = "...";
-            string mimeType = "application/ms-office";
-            FileInfo fi = new FileInfo(caminho);
+            }
 
-            byte[] reportBytes = File.ReadAllBytes(fi.FullName);
-            var result = new HttpResult(reportBytes, mimeType);
-            var a = fi.OpenRead();
-            var b = a.ConvertTo<CsvOnly>().ToString();
-            //result.ResponseText.ReadAllText();
-            result.Headers.Add("Content-Disposition", "attachment;filename=YOUR_NAME_HERE.pdf;");
+            finally
 
-            //return result;
-            //}
+            {
+
+                if (conn.State == ConnectionState.Open)
+
+                    conn.Close();
+
+                conn.Dispose();
+
+                cmd.Dispose();
+
+                da.Dispose();
+
+                wrtr.Close();
+
+                wrtr.Dispose();
+
+            }
         }
     }
 }
